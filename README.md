@@ -1,75 +1,85 @@
-# Event-Driven Banking System
+# Event-Driven Banking
 
-A microservices-based banking system built with Java 21, Spring Boot, Apache Kafka, and PostgreSQL. This project demonstrates event-driven architecture, asynchronous communication, and distributed systems design patterns.
+Sistema bancário baseado em microsserviços, com Java 21, Spring Boot, Apache Kafka e PostgreSQL. Demonstra arquitetura orientada a eventos, comunicação assíncrona e padrões de sistemas distribuídos.
 
-## Architecture
+> 🚧 **Status:** em desenvolvimento. O fluxo principal (contas, transferências e histórico de eventos) funciona; DLQ/retry e testes de integração estão no [roadmap](#roadmap).
 
-```
-HTTP Client
-     │
-     ▼
-account-service (8080)
-     │
-     ├── REST ──► transfer-service (8081)
-     │
-     └── Kafka ──► account-events
-                        │
-transfer-service         │
-     └── Kafka ──► transfer-events
-                        │
-                   notification-service (8082)
-                        └── persists event history
+## Arquitetura
+
+```mermaid
+flowchart LR
+    C[Cliente HTTP] --> A[account-service :8080]
+    A -- REST --> T[transfer-service :8081]
+    A -- publica --> K1[(Kafka: account-events)]
+    T -- publica --> K2[(Kafka: transfer-events)]
+    K1 --> N[notification-service :8082]
+    K2 --> N
 ```
 
-## Microservices
+## Microsserviços
 
-| Service | Port | Database | Responsibility |
+| Serviço | Porta | Banco | Responsabilidade |
 |---|---|---|---|
-| account-service | 8080 | accounts-db:5432 | Account management, balances |
-| transfer-service | 8081 | transfers-db:5433 | Transfers with idempotency |
-| notification-service | 8082 | notifications-db:5434 | Event consumption and history |
+| account-service | 8080 | accounts-db:5432 | Gestão de contas e saldos |
+| transfer-service | 8081 | transfers-db:5433 | Transferências com idempotência |
+| notification-service | 8082 | notifications-db:5434 | Consumo de eventos e histórico |
 
-## Tech Stack
+## Stack
 
-- **Java 21**
-- **Spring Boot 3.3**
-- **Apache Kafka** — async event streaming
-- **PostgreSQL 16** — isolated database per service
-- **Flyway** — database migrations
-- **Docker Compose** — local infrastructure
-- **Lombok** — boilerplate reduction
+Java 21 · Spring Boot 4 · Apache Kafka · PostgreSQL 16 (um banco por serviço) · Flyway · Docker Compose · GitHub Actions · Lombok
 
-## Key Features
+## Funcionalidades
 
-- ✅ Event-driven architecture with Kafka
-- ✅ Idempotent transfers (no duplicate processing)
-- ✅ Database-per-service pattern
-- ✅ Domain events (AccountCreated, TransferCompleted)
-- ✅ Flyway migrations
-- ✅ Dead Letter Queue and retry (in progress)
-- ✅ Integration tests with Testcontainers (in progress)
+- [x] Arquitetura orientada a eventos com Kafka
+- [x] Transferências idempotentes (sem processamento duplicado)
+- [x] Padrão database-per-service
+- [x] Eventos de domínio (`AccountCreated`, `TransferCompleted`)
+- [x] Migrations com Flyway
+- [x] CI com GitHub Actions (build e testes)
+- [ ] Dead Letter Queue e retry (em andamento)
+- [ ] Testes de integração com Testcontainers (em andamento)
 
-### API Endpoints
+## Como rodar
 
-**account-service** — `http://localhost:8080`
+Pré-requisitos: Java 21, Maven e Docker.
 
-| Method | Endpoint | Description |
+```bash
+# 1. Sobe Kafka, Zookeeper e os 3 bancos
+docker-compose up -d
+
+# 2. Em um terminal separado para cada serviço:
+cd account-service && ./mvnw spring-boot:run
+cd transfer-service && ./mvnw spring-boot:run
+cd notification-service && ./mvnw spring-boot:run
+```
+
+## Testes
+
+```bash
+mvn -B test
+```
+
+## API
+
+**account-service** · `http://localhost:8080`
+
+| Método | Rota | Descrição |
 |---|---|---|
-| POST | /accounts | Create account |
-| GET | /accounts | List all accounts |
-| GET | /accounts/{id} | Find by ID |
-| GET | /accounts/cpf/{cpf} | Find by CPF |
-| PATCH | /accounts/{id}/balance | Update balance |
+| POST | /accounts | Cria uma conta |
+| GET | /accounts | Lista as contas |
+| GET | /accounts/{id} | Busca por ID |
+| GET | /accounts/cpf/{cpf} | Busca por CPF |
+| PATCH | /accounts/{id}/balance | Atualiza o saldo |
 
-**transfer-service** — `http://localhost:8081`
+**transfer-service** · `http://localhost:8081`
 
-| Method | Endpoint | Description |
+| Método | Rota | Descrição |
 |---|---|---|
-| POST | /transfers | Create transfer |
-| GET | /transfers | List all transfers |
-| GET | /transfers/{id} | Find by ID |
+| POST | /transfers | Cria uma transferência |
+| GET | /transfers | Lista as transferências |
+| GET | /transfers/{id} | Busca por ID |
 
-## Project Structure
+## Estrutura
 
 ```
 event-driven-banking/
@@ -80,6 +90,12 @@ event-driven-banking/
 └── pom.xml
 ```
 
-## Author
+## Roadmap
 
-João — [github.com/joaodddev](https://github.com/joaodddev)
+- [ ] Dead Letter Queue e retry nos consumidores
+- [ ] Testes de integração com Testcontainers
+- [ ] Atualizar para Spring Boot 4
+
+## Desenvolvido por
+
+João Victor · [GitHub](https://github.com/nevvesdev) · [LinkedIn](https://www.linkedin.com/in/nevvesdev/)
